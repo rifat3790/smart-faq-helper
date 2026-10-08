@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "962005da478c4d8eba4dff44800b79d8"
-application_url = "https://example.com"
+application_url = "https://smart-faq-helper.onrender.com"
 embedded = true
 name = "Shmart faq help center"
 
@@ -45,12 +45,16 @@ api_version = "2027-01"
   topics = [ "app/scopes_update" ]
 
 [app_proxy]
-url = "https://example.com/api/proxy"
+url = "https://smart-faq-helper.onrender.com/api/proxy"
 subpath = "faq-proxy"
 prefix = "apps"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ 
+  "https://smart-faq-helper.onrender.com/auth/callback",
+  "https://smart-faq-helper.onrender.com/auth/shopify/callback",
+  "https://smart-faq-helper.onrender.com/api/auth/callback"
+]
 
 [build]
 include_config_on_deploy = true
