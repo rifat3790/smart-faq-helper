@@ -1,0 +1,11 @@
+{
+  "faq": {
+    "heading": "Frequently Asked Questions",
+    "search_placeholder": "Search questions and answers...",
+    "helpful": "Was this answer helpful?",
+    "yes": "Yes",
+    "no": "No",
+    "ask_question": "Ask a Question",
+    "no_results": "No FAQs found matching your search."
+  }
+}

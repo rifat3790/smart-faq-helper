@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// 1. SHOPIFY SESSION MANAGEMENT
+// -----------------------------------------------------------------------------
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+
+  @@index([shop])
+}
+
+// -----------------------------------------------------------------------------
+// 2. SHOP SETTINGS & VISUAL CUSTOMIZATION
+// -----------------------------------------------------------------------------
+model ShopSetting {
+  id                       String   @id @default(cuid())
+  shop                     String   @unique
+
+  // General & Display Settings
+  faqTitle                 String   @default("Frequently Asked Questions")
+  faqSubtitle              String?
+  layoutStyle              String   @default("ACCORDION") // ACCORDION, GRID, TABS, SIDEBAR
+  
+  // Color Palette & Styling
+  primaryColor             String   @default("#008060")
+  textColor                String   @default("#202223")
+  backgroundColor          String   @default("#ffffff")
+  accordionBgColor         String   @default("#f6f6f7")
+  borderColor              String   @default("#e1e3e5")
+  borderRadius             Int      @default(8)
+  fontFamily               String   @default("inherit")
+  fontSize                 Int      @default(16)
+  iconType                 String   @default("CHEVRON") // CHEVRON, PLUS_MINUS, ARROW, CARET
+  
+  // Accordion Behaviors
+  allowMultipleOpen        Boolean  @default(false)
+  openFirstByDefault       Boolean  @default(false)
+  customCss                String?  @db.Text
+
+  // Feature Toggles
+  enableSearch             Boolean  @default(true)
+  enableCategoryIcons      Boolean  @default(true)
+  enableFeedback           Boolean  @default(true) // "Was this helpful?" voting
+  enableInquiryForm        Boolean  @default(true) // "Ask a question" contact form
+  inquiryNotificationEmail String?
+  enableSchemaOrg          Boolean  @default(true) // FAQPage JSON-LD SEO
+
+  // Timestamps
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@index([shop])
+}
+
+// -----------------------------------------------------------------------------
+// 3. FAQ CATEGORIES / GROUPS
+// -----------------------------------------------------------------------------
+model FaqCategory {
+  id          String    @id @default(cuid())
+  shop        String
+  title       String
+  description String?
+  icon        String?   // SVG icon name or custom icon identifier
+  sortOrder   Int       @default(0)
+  isPublished Boolean   @default(true)
+
+  // Relations
+  faqs        FaqItem[]
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([shop])
+  @@index([shop, isPublished])
+  @@index([shop, sortOrder])
+}
+
+// -----------------------------------------------------------------------------
+// 4. FAQ ITEMS (QUESTIONS & ANSWERS)
+// -----------------------------------------------------------------------------
+model FaqItem {
+  id             String             @id @default(cuid())
+  shop           String
+  
+  // Category Association
+  categoryId     String?
+  category       FaqCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Content
+  question       String
+  answer         String             @db.Text
+  tags           String?            // Comma-separated search tags / keywords
+  
+  // Display & Visibility
+  isPublished    Boolean            @default(true)
+  isGlobal       Boolean            @default(true) // Visible on main FAQ page / general widgets
+  isPinned       Boolean            @default(false)
+  sortOrder      Int                @default(0)
+
+  // Analytics Counters (Cached for rapid read)
+  viewCount      Int                @default(0)
+  helpfulCount   Int                @default(0)
+  unhelpfulCount Int                @default(0)
+
+  // Relations
+  productTargets FaqProductTarget[]
+  votes          FaqVote[]
+
+  // Timestamps
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([shop])
+  @@index([categoryId])
+  @@index([shop, isPublished])
+  @@index([shop, sortOrder])
+  @@index([shop, isGlobal])
+}
+
+// -----------------------------------------------------------------------------
+// 5. CONTEXTUAL TARGETING (PRODUCT / COLLECTION SPECIFIC FAQS)
+// -----------------------------------------------------------------------------
+enum TargetType {
+  PRODUCT
+  COLLECTION
+  TAG
+  PRODUCT_TYPE
+}
+
+model FaqProductTarget {
+  id          String     @id @default(cuid())
+  shop        String
+  
+  faqId       String
+  faq         FaqItem    @relation(fields: [faqId], references: [id], onDelete: Cascade)
+
+  targetType  TargetType @default(PRODUCT)
+  targetId    String     // e.g. "gid://shopify/Product/12345678" or collection handle / tag name
+  targetTitle String?    // Human readable title cached for admin UI
+  targetHandle String?
+
+  createdAt   DateTime   @default(now())
+
+  @@index([shop])
+  @@index([faqId])
+  @@index([shop, targetType, targetId])
+}
+
+// -----------------------------------------------------------------------------
+// 6. CUSTOMER FEEDBACK & VOTING
+// -----------------------------------------------------------------------------
+enum VoteType {
+  HELPFUL
+  UNHELPFUL
+}
+
+model FaqVote {
+  id             String    @id @default(cuid())
+  shop           String
+  
+  faqId          String
+  faq            FaqItem   @relation(fields: [faqId], references: [id], onDelete: Cascade)
+
+  voteType       VoteType
+  customerIpHash String?   // Hashed IP for anti-spam voting protection
+  sessionId      String?   // Storefront visitor session ID
+  feedbackNote   String?   @db.Text
+
+  createdAt      DateTime  @default(now())
+
+  @@index([shop])
+  @@index([faqId])
+  @@index([shop, faqId, customerIpHash])
+}
+
+// -----------------------------------------------------------------------------
+// 7. SEARCH QUERY ANALYTICS (ZERO-RESULT SEARCH TRACKING)
+// -----------------------------------------------------------------------------
+model SearchLog {
+  id             String   @id @default(cuid())
+  shop           String
+  query          String
+  resultsCount   Int      @default(0)
+  hasZeroResults Boolean  @default(false)
+  customerIpHash String?
+
+  createdAt      DateTime @default(now())
+
+  @@index([shop])
+  @@index([shop, hasZeroResults])
+  @@index([shop, query])
+  @@index([shop, createdAt])
+}
+
+// -----------------------------------------------------------------------------
+// 8. UNRESOLVED CUSTOMER INQUIRIES / LEAD CAPTURE
+// -----------------------------------------------------------------------------
+enum InquiryStatus {
+  NEW
+  IN_REVIEW
+  RESOLVED
+  SPAM
+}
+
+model CustomerInquiry {
+  id            String        @id @default(cuid())
+  shop          String
+  customerName  String?
+  customerEmail String
+  subject       String?
+  message       String        @db.Text
+  pageUrl       String?       // Storefront URL where submitted
+  status        InquiryStatus @default(NEW)
+  adminNote     String?       @db.Text
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([shop])
+  @@index([shop, status])
+  @@index([shop, createdAt])
+}

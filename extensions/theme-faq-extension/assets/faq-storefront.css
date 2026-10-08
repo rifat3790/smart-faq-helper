@@ -1,0 +1,291 @@
+/* ==========================================================================
+   Smart FAQ & Help Center — Storefront CSS
+   Vanilla CSS — Lightweight, Responsive, Theme-Inherited
+   ========================================================================== */
+
+:root {
+  --shmart-faq-primary: #008060;
+  --shmart-faq-text: #202223;
+  --shmart-faq-bg: #ffffff;
+  --shmart-faq-item-bg: #f6f6f7;
+  --shmart-faq-border: #e1e3e5;
+  --shmart-faq-radius: 8px;
+  --shmart-faq-font: inherit;
+  --shmart-faq-font-size: 16px;
+}
+
+.shmart-faq-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  font-family: var(--shmart-faq-font, inherit);
+  color: var(--shmart-faq-text);
+  box-sizing: border-box;
+}
+
+.shmart-faq-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.shmart-faq-header h2 {
+  font-size: calc(var(--shmart-faq-font-size) * 1.6);
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--shmart-faq-text);
+  line-height: 1.3;
+}
+
+.shmart-faq-header p {
+  font-size: calc(var(--shmart-faq-font-size) * 0.95);
+  color: #6d7175;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Search Bar */
+.shmart-faq-search-wrapper {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.shmart-faq-search-input {
+  width: 100%;
+  padding: 14px 18px 14px 44px;
+  font-size: var(--shmart-faq-font-size);
+  color: var(--shmart-faq-text);
+  background: #ffffff;
+  border: 1px solid var(--shmart-faq-border);
+  border-radius: var(--shmart-faq-radius);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shmart-faq-search-input:focus {
+  border-color: var(--shmart-faq-primary);
+  box-shadow: 0 0 0 3px rgba(0, 128, 96, 0.15);
+}
+
+.shmart-faq-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8c9196;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* Category Tabs */
+.shmart-faq-categories {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  scrollbar-width: thin;
+}
+
+.shmart-faq-category-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--shmart-faq-item-bg);
+  color: var(--shmart-faq-text);
+  border: 1px solid var(--shmart-faq-border);
+  border-radius: 20px;
+  font-size: calc(var(--shmart-faq-font-size) * 0.88);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.shmart-faq-category-btn:hover {
+  background: #e4e5e7;
+}
+
+.shmart-faq-category-btn.active {
+  background: var(--shmart-faq-primary);
+  color: #ffffff;
+  border-color: var(--shmart-faq-primary);
+}
+
+/* Accordion Item */
+.shmart-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shmart-faq-item {
+  background: var(--shmart-faq-item-bg);
+  border: 1px solid var(--shmart-faq-border);
+  border-radius: var(--shmart-faq-radius);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shmart-faq-item.is-open {
+  border-color: var(--shmart-faq-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.shmart-faq-question-btn {
+  width: 100%;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: var(--shmart-faq-font-size);
+  font-weight: 600;
+  color: var(--shmart-faq-text);
+  text-align: left;
+  cursor: pointer;
+  gap: 14px;
+  user-select: none;
+}
+
+.shmart-faq-question-btn:hover {
+  opacity: 0.9;
+}
+
+.shmart-faq-icon {
+  font-size: 16px;
+  color: var(--shmart-faq-primary);
+  font-weight: 700;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.shmart-faq-item.is-open .shmart-faq-icon {
+  transform: rotate(180deg);
+}
+
+/* Answer Body */
+.shmart-faq-answer {
+  display: none;
+  padding: 0 20px 18px;
+  font-size: calc(var(--shmart-faq-font-size) * 0.94);
+  line-height: 1.65;
+  color: #4a4f54;
+}
+
+.shmart-faq-item.is-open .shmart-faq-answer {
+  display: block;
+  border-top: 1px solid var(--shmart-faq-border);
+  padding-top: 14px;
+}
+
+.shmart-faq-answer a {
+  color: var(--shmart-faq-primary);
+  text-decoration: underline;
+}
+
+/* Helpful Voting */
+.shmart-faq-feedback {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--shmart-faq-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6d7175;
+}
+
+.shmart-faq-vote-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.shmart-faq-vote-btn {
+  background: #ffffff;
+  border: 1px solid var(--shmart-faq-border);
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  color: var(--shmart-faq-text);
+}
+
+.shmart-faq-vote-btn:hover {
+  background: #f1f2f4;
+  border-color: #c9cccf;
+}
+
+.shmart-faq-vote-btn.voted {
+  background: var(--shmart-faq-primary);
+  color: #ffffff;
+  border-color: var(--shmart-faq-primary);
+  pointer-events: none;
+}
+
+/* Inquiry Fallback Section */
+.shmart-faq-inquiry-box {
+  margin-top: 36px;
+  padding: 24px;
+  background: #f9fafb;
+  border: 1px dashed var(--shmart-faq-border);
+  border-radius: var(--shmart-faq-radius);
+  text-align: center;
+}
+
+.shmart-faq-inquiry-box h3 {
+  margin: 0 0 8px;
+  font-size: calc(var(--shmart-faq-font-size) * 1.15);
+  font-weight: 600;
+}
+
+.shmart-faq-inquiry-box p {
+  margin: 0 0 16px;
+  color: #6d7175;
+  font-size: calc(var(--shmart-faq-font-size) * 0.9);
+}
+
+.shmart-faq-inquiry-form {
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.shmart-faq-input, .shmart-faq-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--shmart-faq-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.shmart-faq-submit-btn {
+  background: var(--shmart-faq-primary);
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.shmart-faq-submit-btn:hover {
+  opacity: 0.9;
+}

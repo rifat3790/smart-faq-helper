@@ -1,0 +1,220 @@
+{{ 'faq-storefront.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'faq-storefront.js' | asset_url }}" defer></script>
+
+{% style %}
+  #shmart-faq-{{ block.id }} {
+    --shmart-faq-primary: {{ block.settings.primary_color }};
+    --shmart-faq-text: {{ block.settings.text_color }};
+    --shmart-faq-item-bg: {{ block.settings.item_bg_color }};
+    --shmart-faq-border: {{ block.settings.border_color }};
+    --shmart-faq-radius: {{ block.settings.border_radius }}px;
+    --shmart-faq-font-size: {{ block.settings.font_size }}px;
+  }
+{% endstyle %}
+
+<div id="shmart-faq-{{ block.id }}" class="shmart-faq-container" data-allow-multiple="{{ block.settings.allow_multiple }}">
+  {% if block.settings.heading != blank or block.settings.subheading != blank %}
+    <div class="shmart-faq-header">
+      {% if block.settings.heading != blank %}
+        <h2>{{ block.settings.heading }}</h2>
+      {% endif %}
+      {% if block.settings.subheading != blank %}
+        <p>{{ block.settings.subheading }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if block.settings.enable_search %}
+    <div class="shmart-faq-search-wrapper">
+      <span class="shmart-faq-search-icon">🔍</span>
+      <input
+        type="text"
+        class="shmart-faq-search-input"
+        placeholder="{{ block.settings.search_placeholder | default: 'Search questions and answers...' }}"
+        aria-label="Search FAQs"
+      >
+    </div>
+  {% endif %}
+
+  <!-- FAQ Accordion List (Loaded dynamically from App Proxy) -->
+  <div class="shmart-faq-list" id="shmart-faq-list-{{ block.id }}">
+    <!-- Dynamic Proxy Render Container -->
+  </div>
+
+  {% if block.settings.enable_inquiry %}
+    <div class="shmart-faq-inquiry-box">
+      <h3>{{ block.settings.inquiry_heading | default: "Still have questions? We're here to help!" }}</h3>
+      <p>{{ block.settings.inquiry_subheading | default: "Submit your question directly and our support team will get back to you." }}</p>
+      
+      <form class="shmart-faq-inquiry-form">
+        <input type="text" name="customerName" class="shmart-faq-input" placeholder="Your Name" required>
+        <input type="email" name="customerEmail" class="shmart-faq-input" placeholder="Your Email Address" required>
+        <textarea name="message" class="shmart-faq-textarea" rows="4" placeholder="How can we help you?" required></textarea>
+        <button type="submit" class="shmart-faq-submit-btn">Send Question</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  (function() {
+    async function loadFaqsForBlock() {
+      const listEl = document.getElementById('shmart-faq-list-{{ block.id }}');
+      if (!listEl) return;
+
+      try {
+        const response = await fetch('/apps/faq-proxy/faqs');
+        if (!response.ok) return;
+        const data = await response.json();
+        const faqs = data.faqs || [];
+
+        if (faqs.length === 0) {
+          listEl.innerHTML = '<p style="text-align: center; color: #6d7175;">No FAQs available right now.</p>';
+          return;
+        }
+
+        let html = '';
+        faqs.forEach(function(faq, idx) {
+          const isOpen = idx === 0 && {{ block.settings.open_first | default: false }};
+          html += `
+            <div class="shmart-faq-item ${isOpen ? 'is-open' : ''}" data-category="${faq.categoryId || 'all'}" data-tags="${faq.tags || ''}">
+              <button class="shmart-faq-question-btn" type="button" aria-expanded="${isOpen ? 'true' : 'false'}">
+                <span class="shmart-faq-question-title">${faq.question}</span>
+                <span class="shmart-faq-icon">⌄</span>
+              </button>
+              <div class="shmart-faq-answer">
+                <div class="shmart-faq-answer-content">${faq.answer}</div>
+                {% if block.settings.enable_voting %}
+                  <div class="shmart-faq-feedback">
+                    <span>Was this answer helpful?</span>
+                    <div class="shmart-faq-vote-btns">
+                      <button type="button" class="shmart-faq-vote-btn" data-faq-id="${faq.id}" data-vote-type="HELPFUL">👍 Yes</button>
+                      <button type="button" class="shmart-faq-vote-btn" data-faq-id="${faq.id}" data-vote-type="UNHELPFUL">👎 No</button>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          `;
+        });
+
+        listEl.innerHTML = html;
+      } catch (e) {
+        console.error('Failed to load FAQs:', e);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadFaqsForBlock);
+    } else {
+      loadFaqsForBlock();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Smart FAQ Section",
+  "target": "section",
+  "stylesheet": "faq-storefront.css",
+  "javascript": "faq-storefront.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Frequently Asked Questions"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Find answers to our most common questions about orders, shipping, and returns."
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_search",
+      "label": "Enable Live Search Bar",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "search_placeholder",
+      "label": "Search Placeholder",
+      "default": "Search questions and answers..."
+    },
+    {
+      "type": "checkbox",
+      "id": "allow_multiple",
+      "label": "Allow Multiple Accordions Open",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "open_first",
+      "label": "Open First FAQ by Default",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_voting",
+      "label": "Enable 'Was this helpful?' Rating",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_inquiry",
+      "label": "Enable 'Ask a Question' Contact Form",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Appearance & Colors"
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Primary / Accent Color",
+      "default": "#008060"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#202223"
+    },
+    {
+      "type": "color",
+      "id": "item_bg_color",
+      "label": "Accordion Background",
+      "default": "#f6f6f7"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#e1e3e5"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Corner Radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "min": 14,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Base Font Size",
+      "default": 16
+    }
+  ]
+}
+{% endschema %}

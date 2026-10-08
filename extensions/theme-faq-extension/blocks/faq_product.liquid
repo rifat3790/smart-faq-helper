@@ -1,0 +1,157 @@
+{{ 'faq-storefront.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'faq-storefront.js' | asset_url }}" defer></script>
+
+{% style %}
+  #shmart-faq-product-{{ block.id }} {
+    --shmart-faq-primary: {{ block.settings.primary_color }};
+    --shmart-faq-text: {{ block.settings.text_color }};
+    --shmart-faq-item-bg: {{ block.settings.item_bg_color }};
+    --shmart-faq-border: {{ block.settings.border_color }};
+    --shmart-faq-radius: {{ block.settings.border_radius }}px;
+    --shmart-faq-font-size: {{ block.settings.font_size }}px;
+  }
+{% endstyle %}
+
+<div id="shmart-faq-product-{{ block.id }}" class="shmart-faq-container" style="padding: 16px 0;">
+  {% if block.settings.heading != blank %}
+    <h3 style="margin: 0 0 14px; font-size: {{ block.settings.font_size | plus: 2 }}px; font-weight: 700;">
+      {{ block.settings.heading }}
+    </h3>
+  {% endif %}
+
+  <div class="shmart-faq-list" id="shmart-faq-product-list-{{ block.id }}">
+    <!-- Dynamic Product FAQs -->
+  </div>
+</div>
+
+<script>
+  (function() {
+    async function loadProductFaqs() {
+      const listEl = document.getElementById('shmart-faq-product-list-{{ block.id }}');
+      if (!listEl) return;
+
+      try {
+        const response = await fetch('/apps/faq-proxy/faqs');
+        if (!response.ok) return;
+        const data = await response.json();
+        const faqs = data.faqs || [];
+
+        // Filter FAQs for product page (global FAQs or matching product targets)
+        const currentProductId = "{{ product.id }}";
+        const currentProductGid = "gid://shopify/Product/{{ product.id }}";
+
+        const matchingFaqs = faqs.filter(function(faq) {
+          if (faq.isGlobal) return true;
+          if (faq.productTargets && faq.productTargets.some(t => t.targetId === currentProductGid || t.targetId === currentProductId)) return true;
+          return false;
+        });
+
+        if (matchingFaqs.length === 0) {
+          listEl.style.display = 'none';
+          return;
+        }
+
+        let html = '';
+        matchingFaqs.forEach(function(faq) {
+          html += `
+            <div class="shmart-faq-item" data-category="${faq.categoryId || 'all'}">
+              <button class="shmart-faq-question-btn" type="button" aria-expanded="false">
+                <span class="shmart-faq-question-title">${faq.question}</span>
+                <span class="shmart-faq-icon">⌄</span>
+              </button>
+              <div class="shmart-faq-answer">
+                <div class="shmart-faq-answer-content">${faq.answer}</div>
+                {% if block.settings.enable_voting %}
+                  <div class="shmart-faq-feedback">
+                    <span>Was this helpful?</span>
+                    <div class="shmart-faq-vote-btns">
+                      <button type="button" class="shmart-faq-vote-btn" data-faq-id="${faq.id}" data-vote-type="HELPFUL">👍 Yes</button>
+                      <button type="button" class="shmart-faq-vote-btn" data-faq-id="${faq.id}" data-vote-type="UNHELPFUL">👎 No</button>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          `;
+        });
+
+        listEl.innerHTML = html;
+      } catch (e) {
+        console.error('Failed to load Product FAQs:', e);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadProductFaqs);
+    } else {
+      loadProductFaqs();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Product FAQ Tab",
+  "target": "section",
+  "stylesheet": "faq-storefront.css",
+  "javascript": "faq-storefront.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Heading",
+      "default": "Frequently Asked Questions"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_voting",
+      "label": "Enable Helpful Votes",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Accent Color",
+      "default": "#008060"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#202223"
+    },
+    {
+      "type": "color",
+      "id": "item_bg_color",
+      "label": "Accordion Background",
+      "default": "#f6f6f7"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#e1e3e5"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Corner Radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "min": 13,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Font Size",
+      "default": 15
+    }
+  ]
+}
+{% endschema %}

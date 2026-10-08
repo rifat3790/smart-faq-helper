@@ -1,0 +1,64 @@
+{% comment %}
+  Schema.org FAQPage JSON-LD Microdata Injector
+  Provides automatic Google Search Rich Snippets for published FAQs
+{% endcomment %}
+
+<script type="application/ld+json" id="shmart-faq-schema">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": []
+}
+</script>
+
+<script>
+  (function() {
+    async function injectFaqSchema() {
+      try {
+        const response = await fetch('/apps/faq-proxy/faqs');
+        if (!response.ok) return;
+        const data = await response.json();
+        const faqs = data.faqs || [];
+
+        if (faqs.length === 0) return;
+
+        const entities = faqs.map(function(faq) {
+          const cleanAnswer = faq.answer.replace(/<[^>]*>?/gm, '');
+          return {
+            "@type": "Question",
+            "name": faq.question,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": cleanAnswer
+            }
+          };
+        });
+
+        const schemaTag = document.getElementById('shmart-faq-schema');
+        if (schemaTag) {
+          schemaTag.textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": entities
+          });
+        }
+      } catch (e) {
+        console.error('Failed to inject FAQ Schema:', e);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', injectFaqSchema);
+    } else {
+      injectFaqSchema();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "FAQ SEO Rich Schema",
+  "target": "head",
+  "settings": []
+}
+{% endschema %}
